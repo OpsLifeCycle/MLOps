@@ -1,0 +1,22 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: blue
+endpoint_name: dogs-classifier-online
+model: azureml:resnet-dogs-classifier@latest
+instance_type: Standard_D2as_v4
+instance_count: 1
+liveness_probe: 
+    period: 10
+    initial_delay: 300
+    timeout: 5
+    success_threshold: 1
+    failure_threshold: 3
+readiness_probe: 
+    period: 10
+    initial_delay: 300
+    timeout: 5
+    success_threshold: 1
+    failure_threshold: 3
+

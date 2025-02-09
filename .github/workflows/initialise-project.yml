@@ -1,0 +1,141 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+name: 00-Initialize-Repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      github_org_name:
+        type: string
+        required: true
+        description: 'GitHub Org Name'
+      repo_name:
+        type: string
+        required: true
+        description: 'New Project Repository Name'
+      project_type:
+        default: classical
+        description: 'ML Project Type'
+        required: true
+        type: choice
+        options:
+          - classical
+          - cv
+          - nlp
+      # infrastructure_provisioner:
+      #   default: terraform
+      #   description: 'MLOps Infrastructure Provisioner'
+      #   required: true
+      #   type: choice
+      #   options:
+      #     - terraform
+      infrastructure_provider:
+        default: azure
+        description: 'MLOps Infrastructure Provider'
+        required: true
+        type: choice
+        options:
+          - azure
+      orchestration_tool:
+        default: github
+        description: 'MLOps Orchestration Tool'
+        required: true
+        type: choice
+        options:
+          - github
+      # project_name:
+      #   type: string
+      #   required: false
+      #   description: 'ADO Project Name'
+
+jobs:
+  Initialise_Repository:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout MLOps Lifecycle Managment Repository
+        uses: actions/checkout@v4.2.2
+        with:
+          repository: ${{ github.repository }}
+          path: mlops
+
+      - name: Initialise your repository
+        run: | 
+          # Create necessary directories
+          mkdir files_to_keep
+          mkdir files_to_delete
+          mkdir -p ${{ inputs.repo_name }}
+
+          # Copy necessary files from the template repository
+          cd mlops/templates/project/
+          cp --parents -r infrastructure ../../../files_to_keep
+          cp --parents -r ${{ inputs.project_type }}/${{ inputs.infrastructure_provider }} ../../../files_to_keep
+          cp config-infra-dev.yml ../../../files_to_keep
+          cp config-infra-prd.yml ../../../files_to_keep
+          cp ../../LICENSE.md ../../../files_to_keep
+          cp ../../README.md ../../../files_to_keep
+          cp ../../CONTRIBUTING.md ../../../files_to_keep
+          cp ../../.gitignore ../../../files_to_keep
+          cp ../../.pre-commit-config.yaml ../../../files_to_keep
+          # cp -r ../../.devcontainer ../../../files_to_keep
+          cd ../../..
+
+
+          mv mlops/* files_to_delete
+
+          rm -rf ${{ inputs.repo_name }}/*
+          mv files_to_keep/* ${{ inputs.repo_name }}
+          cd ${{ inputs.repo_name }}
+
+          # Move files to appropriate level
+          mv ${{ inputs.project_type }}/${{ inputs.infrastructure_provider }}/data-science data-science
+          mv ${{ inputs.project_type }}/${{ inputs.infrastructure_provider }}/mlops mlops
+          mv ${{ inputs.project_type }}/${{ inputs.infrastructure_provider }}/data data
+
+          rm -rf ${{ inputs.project_type }}
+
+          if [[ "${{ inputs.orchestration_tool }}" == "github" ]]; then
+            mkdir -p .github/workflows/mlops
+            mv infrastructure/github/* .github/workflows/
+            mv mlops/github/* .github/workflows/
+            rm -rf mlops/github
+            rm -rf mlops/azure
+            rm -rf infrastructure
+          elif [[ "${{ inputs.orchestration_tool }}" == "azure" ]]; then
+            mkdir -p .azuredevops/mlops/ .azuredevops/infrastructure/
+            mv infrastructure/azure/* .azuredevops/infrastructure/
+            mv mlops/azure/* .azuredevops/mlops/
+            rm -rf mlops/github
+            rm -rf mlops/azure
+            rm -rf infrastructure
+          fi
+          
+          # Configure Git
+          git init -b main
+          git add .           
+          
+      - name: Create GitHub Repo and Secrets
+        if: inputs.orchestration_tool == 'github'
+        run: |
+          cd ${{ inputs.repo_name }}
+          git config user.email "17222963+OpsLifeCycle@users.noreply.github.com"
+          git config user.name "Rahul Bourai"
+          git commit -m 'initial commit'
+
+          # Check if the GitHub repository exists and create it if it doesn't
+          echo "Checking if the GitHub Repository exists..."
+          echo "${{ secrets.PERSONAL_ACCESS_TOKEN }}" | gh auth login --with-token
+          if gh repo view ${{ inputs.github_org_name }}/${{ inputs.repo_name }} > /dev/null 2>&1; then
+            echo "Repository ${{ inputs.repo_name }} exists."
+          else
+            echo "Repository ${{ inputs.repo_name }} does not exist. Creating it."
+            gh repo create ${{ inputs.github_org_name }}/${{ inputs.repo_name }} --private --source=. --remote=upstream --push
+
+            echo "Creating secrets on ${{ inputs.repo_name }}. Creating it."
+            gh secret set ARM_CLIENT_ID --body "${{ secrets.ARM_CLIENT_ID }}" --repo ${{ inputs.github_org_name }}/${{ inputs.repo_name }}
+            gh secret set ARM_CLIENT_SECRET --body "${{ secrets.ARM_CLIENT_SECRET }}" --repo ${{ inputs.github_org_name }}/${{ inputs.repo_name }}
+            gh secret set ARM_SUBSCRIPTION_ID --body "${{ secrets.ARM_SUBSCRIPTION_ID }}" --repo ${{ inputs.github_org_name }}/${{ inputs.repo_name }}
+            gh secret set ARM_TENANT_ID --body "${{ secrets.ARM_TENANT_ID }}" --repo ${{ inputs.github_org_name }}/${{ inputs.repo_name }}
+            gh secret set MLOPS_READ_PERSONAL_ACCESS_TOKEN --body "${{ secrets.MLOPS_READ_PERSONAL_ACCESS_TOKEN }}" --repo ${{ inputs.github_org_name }}/${{ inputs.repo_name }}
+          fi

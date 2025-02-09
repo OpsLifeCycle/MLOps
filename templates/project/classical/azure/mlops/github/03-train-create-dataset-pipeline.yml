@@ -1,0 +1,46 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+name: 03-train-create-dataset-pipeline
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  set-env-branch:
+    runs-on: ubuntu-24.04
+    outputs:
+      config-file: ${{ steps.set-output-defaults.outputs.config-file }}
+    steps:
+      - id: set-prd-branch
+        name: set-prd-branch
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: echo "config_env=config-infra-prd.yml" >> $GITHUB_ENV
+      - id: set-dev-branch
+        name: set-dev-branch
+        if: ${{ github.ref != 'refs/heads/main' }}
+        run: echo "config_env=config-infra-dev.yml" >> $GITHUB_ENV
+      - id: set-output-defaults
+        name: set-output-defaults
+        run: |
+          echo "config-file=$config_env" >> $GITHUB_OUTPUT
+
+  get-config:
+    needs: set-env-branch
+    uses: OpsLifeCycle/mlops/.github/workflows/read-yaml.yml@main
+    with:
+      file_name: ${{ needs.set-env-branch.outputs.config-file }}
+
+  create-dataset:
+    needs: [get-config]
+    uses: OpsLifeCycle/mlops/.github/workflows/create-dataset.yml@main
+    with:
+      resource_group: ${{ needs.get-config.outputs.resource_group }}
+      workspace_name: ${{ needs.get-config.outputs.ml_workspace }}
+      name: taxi-data
+      data_file: mlops/azureml/train/data.yml
+    secrets:
+      clientId: ${{ secrets.ARM_CLIENT_ID }}
+      clientSecret: ${{ secrets.ARM_CLIENT_SECRET }}
+      subscriptionId: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      tenantId: ${{ secrets.ARM_TENANT_ID }}

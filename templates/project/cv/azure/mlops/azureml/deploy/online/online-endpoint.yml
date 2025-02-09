@@ -1,0 +1,7 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineEndpoint.schema.json
+name: dogs-classifier-online
+description: Stanford Dogs Classifier
+auth_mode: key

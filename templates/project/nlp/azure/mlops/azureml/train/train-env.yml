@@ -1,0 +1,8 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+name: nlp_summarization_train
+version: 0.0.1
+build:
+  path: ../../../data-science/environments/training/

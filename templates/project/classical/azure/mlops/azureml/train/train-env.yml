@@ -1,0 +1,8 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+name: taxi-train-env
+image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04
+conda_file: ../../../data-science/environment/train-conda.yml
+description: Environment created from a Docker image plus Conda environment to train taxi model.

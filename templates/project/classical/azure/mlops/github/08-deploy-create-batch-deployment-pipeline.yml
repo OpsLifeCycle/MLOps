@@ -1,0 +1,58 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+name: 08-deploy-create-batch-deployment-pipeline
+
+on: 
+  workflow_dispatch:
+    inputs:
+      action_type:
+        default: create
+        description: 'Action Type'
+        required: true
+        type: choice
+        options:
+          - create
+          - delete
+          
+jobs:
+  set-env-branch:
+    runs-on: ubuntu-24.04
+    outputs:
+      config-file: ${{ steps.set-output-defaults.outputs.config-file }}
+    steps:
+      - id: set-prd-branch
+        name: set-prd-branch
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: echo "config_env=config-infra-prd.yml" >> $GITHUB_ENV
+      - id: set-dev-branch
+        name: set-dev-branch
+        if: ${{ github.ref != 'refs/heads/main' }}
+        run: echo "config_env=config-infra-dev.yml" >> $GITHUB_ENV
+      - id: set-output-defaults
+        name: set-output-defaults
+        run: |
+          echo "config-file=$config_env" >> $GITHUB_OUTPUT
+
+  get-config:
+    needs: set-env-branch
+    uses: OpsLifeCycle/mlops/.github/workflows/read-yaml.yml@main
+    with:
+      file_name: ${{ needs.set-env-branch.outputs.config-file }}
+
+  create-deployment:
+    needs: [get-config]
+    uses: OpsLifeCycle/mlops/.github/workflows/create-deployment.yml@main
+    with:
+      resource_group: ${{ needs.get-config.outputs.resource_group }}
+      workspace_name: ${{ needs.get-config.outputs.ml_workspace }}
+      endpoint_file: mlops/azureml/deploy/batch/batch-deployment.yml
+      endpoint_name: ${{ format('taxi-clscl-{0}', needs.get-config.outputs.bep) }}
+      endpoint_type: batch
+      deployment_name: ${{ format('taxi-clscl-dp-{0}', needs.get-config.outputs.bep) }}
+      action_type: ${{ inputs.action_type }}
+    secrets:
+      clientId: ${{ secrets.ARM_CLIENT_ID }}
+      clientSecret: ${{ secrets.ARM_CLIENT_SECRET }}
+      subscriptionId: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      tenantId: ${{ secrets.ARM_TENANT_ID }}

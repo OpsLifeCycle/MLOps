@@ -1,0 +1,161 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+name: 01-read-yaml
+
+on:
+  workflow_call:
+    inputs:
+      file_name:
+        required: true
+        type: string
+    outputs:
+      location:
+        description: "The resource group to use"
+        value: ${{ jobs.read-yaml.outputs.location }}
+      namespace:
+        description: "Namespace of the resources"
+        value: ${{ jobs.read-yaml.outputs.namespace }}
+      postfix:
+        description: "Postfix for the resource names"
+        value: ${{ jobs.read-yaml.outputs.postfix }}
+      environment:
+        description: "Environment"
+        value: ${{ jobs.read-yaml.outputs.environment }}
+      enable_aml_computecluster:
+        description: "Boolean to decide whether to deploy an AML compute cluster or not"
+        value: ${{ jobs.read-yaml.outputs.enable_aml_computecluster }}
+      enable_monitoring:
+        description: "Boolean to decide whether to enable monitoring"
+        value: ${{ jobs.read-yaml.outputs.enable_monitoring }}
+      resource_group:
+        description: "The resource group to use"
+        value: ${{ jobs.read-yaml.outputs.resource_group }}
+      ml_workspace:
+        description: "The ml_workspace to use"
+        value: ${{ jobs.read-yaml.outputs.ml_workspace }}
+      bep:
+        description: "The batch endpoint"
+        value: ${{ jobs.read-yaml.outputs.bep }}
+      oep:
+        description: "The online endpoint"
+        value: ${{ jobs.read-yaml.outputs.oep }}
+      terraform_version:
+        description: "Terraform version"
+        value: ${{ jobs.read-yaml.outputs.terraform_version }}
+      infrastructure_provider:
+        description: "Terraform State working directory"
+        value: ${{ jobs.read-yaml.outputs.infrastructure_provider }}
+      terraform_st_location:
+        description: "Terraform State location"
+        value: ${{ jobs.read-yaml.outputs.terraform_st_location }}
+      terraform_st_resource_group:
+        description: "Terraform State Resource Group"
+        value: ${{ jobs.read-yaml.outputs.terraform_st_resource_group }}
+      terraform_st_storage_account:
+        description: "Terraform State Storage Account"
+        value: ${{ jobs.read-yaml.outputs.terraform_st_storage_account }}
+      terraform_st_container_name:
+        description: "Terraform State Container name"
+        value: ${{ jobs.read-yaml.outputs.terraform_st_container_name }}
+      terraform_st_key:
+        description: "Terraform State Key"
+        value: ${{ jobs.read-yaml.outputs.terraform_st_key }}
+
+jobs:
+  read-yaml:
+    runs-on: ubuntu-24.04
+    outputs:
+      location: ${{ steps.set_outputs.outputs.location }}
+      namespace: ${{ steps.set_outputs.outputs.namespace }}
+      postfix: ${{ steps.set_outputs.outputs.postfix }}
+      environment: ${{ steps.set_outputs.outputs.environment }}
+      enable_aml_computecluster: ${{ steps.set_outputs.outputs.enable_aml_computecluster }}
+      enable_monitoring: ${{ steps.set_outputs.outputs.enable_monitoring }}
+      resource_group: ${{ steps.set_outputs.outputs.resource_group }}
+      ml_workspace: ${{ steps.set_outputs.outputs.ml_workspace }}
+      bep: ${{ steps.set_outputs.outputs.bep }}
+      oep: ${{ steps.set_outputs.outputs.oep }}
+      terraform_version: ${{ steps.set_outputs.outputs.terraform_version }}
+      infrastructure_provider: ${{ steps.set_outputs.outputs.infrastructure_provider }}
+      terraform_st_location: ${{ steps.set_outputs.outputs.terraform_st_location }}
+      terraform_st_resource_group: ${{ steps.set_outputs.outputs.terraform_st_resource_group }}
+      terraform_st_storage_account: ${{ steps.set_outputs.outputs.terraform_st_storage_account }}
+      terraform_st_container_name: ${{ steps.set_outputs.outputs.terraform_st_container_name }}
+      terraform_st_key: ${{ steps.set_outputs.outputs.terraform_st_key }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Install tools and process YAML
+        id: set_outputs
+        run: |
+          sudo apt-get update && sudo apt-get install -y gawk
+
+          # Define the YAML file location
+          YAML_FILE="${{ github.workspace }}/${{ inputs.file_name }}"
+
+          # Parse YAML and export variables
+          parse_yaml() {
+              local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+              sed -ne "s|^\($s\):|\1|" \
+                -e "s|^\($s\)\($w\)$s:$s[\"\']\(.*\)[\"\']$s\$|$fs\2$fs\3|p" \
+                -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|$fs\2$fs\3|p" $YAML_FILE |
+              awk -F$fs '{
+                indent = length($1)/2;
+                vname[indent] = $2;
+                for (i in vname) {if (i > indent) {delete vname[i]}}
+                if (length($3) > 0) {
+                    vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+                    printf("%s%s=\"%s\"\n", (vn), $2, $3);
+                }
+              }'
+          }
+
+          # Parse and export base variables
+          eval $(parse_yaml | grep -E '^(ap_vm_image=|environment=|namespace=|postfix=|location=|enable_aml_computecluster=|enable_monitoring=|terraform_version=|infrastructure_provider=)')
+
+          # Construct and export the dependent variables
+          ado_service_connection_rg="$infrastructure_provider-$namespace-$environment-$postfix"
+          ado_service_connection_aml_ws="$infrastructure_provider-$namespace-$environment-$postfix"
+          resource_group="rg-$namespace-$environment-$postfix"
+          ml_workspace="mlw-$namespace-$environment-$postfix"
+          application_insights="mlw-$namespace-$environment-$postfix"
+          key_vault="kv-$namespace-$environment-$postfix"
+          container_registry="cr$namespace$environment$postfix"
+          storage_account="st$namespace$environment$postfix"
+          terraform_st_location="$location"
+          terraform_st_resource_group="rg-$namespace-$environment-tf-$postfix"
+          terraform_st_storage_account="st$namespace$environment""tf$postfix"
+          terraform_st_container_name="ct-$namespace-$environment-tf-$postfix"
+          terraform_st_key="keytab-$namespace-$environment-tf-$postfix"
+          bep="bep-$namespace-$environment-$postfix"
+          oep="oep-$namespace-$environment-$postfix"
+
+          # Set outputs using environment files
+          {
+            echo "location=$location"
+            echo "namespace=$namespace"
+            echo "postfix=$postfix"
+            echo "environment=$environment"
+            echo "enable_aml_computecluster=$enable_aml_computecluster"
+            echo "enable_monitoring=$enable_monitoring"
+            echo "resource_group=$resource_group"
+            echo "ml_workspace=$ml_workspace"
+            echo "bep=$bep"
+            echo "oep=$oep"
+            echo "ado_service_connection_rg=$ado_service_connection_rg"
+            echo "ado_service_connection_aml_ws=$ado_service_connection_aml_ws"
+            echo "terraform_version=$terraform_version"
+            echo "infrastructure_provider=$infrastructure_provider"
+            echo "terraform_st_location=$terraform_st_location"
+            echo "terraform_st_resource_group=$terraform_st_resource_group"
+            echo "terraform_st_storage_account=$terraform_st_storage_account"
+            echo "terraform_st_container_name=$terraform_st_container_name"
+            echo "terraform_st_key=$terraform_st_key"
+          } >> $GITHUB_OUTPUT
+
+          # Print environment variables for verification
+          for var in location namespace postfix environment enable_aml_computecluster enable_monitoring resource_group ml_workspace bep oep ado_service_connection_rg ado_service_connection_aml_ws terraform_version infrastructure_provider terraform_st_location terraform_st_resource_group terraform_st_storage_account terraform_st_container_name terraform_st_key; do
+              echo "$var=${!var}"
+          done

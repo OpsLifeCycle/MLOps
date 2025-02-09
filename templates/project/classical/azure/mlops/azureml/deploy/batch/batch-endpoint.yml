@@ -1,0 +1,7 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+$schema: https://azuremlschemas.azureedge.net/latest/batchEndpoint.schema.json
+name: taxi-fare-batch
+description: taxi cost batch endpoint
+auth_mode: aad_token

@@ -1,0 +1,11 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+
+steps:
+  - task: TerraformTaskV2@2
+    displayName: 'Terraform validate'
+    inputs:
+      provider: 'azurerm'
+      command: 'validate'
+      workingDirectory: $(System.DefaultWorkingDirectory)/$(infrastructure_provider)

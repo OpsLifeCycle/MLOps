@@ -1,0 +1,69 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+name: 00-gh-deploy-infra
+
+on:
+  #push:
+  workflow_dispatch:
+    inputs:
+      action_type:
+        default: apply
+        description: 'Action Type'
+        required: true
+        type: choice
+        options:
+          - apply
+          - destroy
+env:
+  config_env: "none"
+jobs:
+  set-env-branch:
+    runs-on: ubuntu-24.04
+    outputs:
+      config-file: ${{ steps.set-output-defaults.outputs.config-file }}
+    steps:
+      - id: set-prd-branch
+        name: set-prd-branch
+        if: ${{ github.ref == 'refs/heads/main'}}
+        run: echo "config_env=config-infra-prd.yml" >> $GITHUB_ENV;
+      - id: set-dev-branch
+        name: setdevbranch
+        if: ${{ github.ref != 'refs/heads/main'}}
+        run: echo "config_env=config-infra-dev.yml" >> $GITHUB_ENV;
+      - id: set-output-defaults
+        name: set-output-defaults
+        run: |
+          echo "config-file=$config_env" >> $GITHUB_OUTPUT;
+  get-config:
+    needs: set-env-branch
+    uses: OpsLifeCycle/mlops/.github/workflows/read-yaml.yml@main
+    with:
+      file_name: ${{ needs.set-env-branch.outputs.config-file}}
+  terraform-deployment:
+    needs: [get-config, set-env-branch]
+    uses: OpsLifeCycle/mlops/.github/workflows/install-terraform.yml@main
+    with:
+      TFAction: ${{ inputs.action_type }}
+      dply_environment: ${{ needs.set-env-branch.outputs.config-file }}
+      location: ${{ needs.get-config.outputs.location }}
+      namespace: ${{ needs.get-config.outputs.namespace }}
+      postfix: ${{ needs.get-config.outputs.postfix }}
+      environment: ${{ needs.get-config.outputs.environment }}
+      enable_aml_computecluster: ${{ needs.get-config.outputs.enable_aml_computecluster == true }} ## TODO review the evaluation of boolean
+      enable_monitoring: ${{ needs.get-config.outputs.enable_monitoring == true  }} ## TODO review the evaluation of boolean
+      terraform_version: ${{ needs.get-config.outputs.terraform_version }}
+      infrastructure_provider: ${{ needs.get-config.outputs.infrastructure_provider }}
+      terraform_st_location: ${{ needs.get-config.outputs.terraform_st_location }}
+      terraform_st_storage_account: ${{ needs.get-config.outputs.terraform_st_storage_account }}
+      terraform_st_resource_group: ${{ needs.get-config.outputs.terraform_st_resource_group }}
+      terraform_st_container_name: ${{ needs.get-config.outputs.terraform_st_container_name }}
+      terraform_st_key: ${{ needs.get-config.outputs.terraform_st_key }}
+      terraform_plan_location: ${{ needs.get-config.outputs.location }}
+      terraform_plan_vnet: "TBD" # TBD
+    secrets:
+      clientId: ${{ secrets.ARM_CLIENT_ID }}
+      clientSecret: ${{ secrets.ARM_CLIENT_SECRET }}
+      subscriptionId: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      tenantId: ${{ secrets.ARM_TENANT_ID }}
+      MLOPS_READ_PERSONAL_ACCESS_TOKEN: ${{ secrets.MLOPS_READ_PERSONAL_ACCESS_TOKEN }}

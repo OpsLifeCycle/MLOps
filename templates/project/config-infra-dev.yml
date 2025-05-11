@@ -14,7 +14,7 @@ variables:
   location: centralindia
   enable_aml_computecluster: true
   enable_monitoring: false
-  terraform_version: 1.10.4
+  terraform_version: 1.11.4
   infrastructure_provider: azure
 
   # # DO NOT TOUCH for reference only

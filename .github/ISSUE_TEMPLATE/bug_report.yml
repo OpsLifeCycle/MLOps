@@ -1,0 +1,38 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+# Bug Report Template
+name: 🐛 Bug report
+description: Report an issue with the functionality of the application.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much detail as possible.
+
+  - type: input
+    id: title
+    attributes:
+      label: "Brief summary of the issue"
+      placeholder: "E.g., Button not working on the homepage"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to reproduce the issue"
+      placeholder: "List steps clearly, e.g.: 1. Navigate to the homepage. 2. Click the button."
+      render: shell
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "What did you expect to happen?"
+      placeholder: "Describe the expected behavior"
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "What actually happens?"
+      placeholder: "Provide details of what is or isn’t working."

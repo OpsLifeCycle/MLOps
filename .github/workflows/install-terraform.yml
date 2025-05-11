@@ -83,7 +83,7 @@ on:
         required: true
       subscriptionId:
         required: true
-      MLOPS_READ_PERSONAL_ACCESS_TOKEN:
+      TEMPLATE_PERSONAL_ACCESS_TOKEN:
         required: true   
 
 jobs:
@@ -139,7 +139,7 @@ jobs:
       with:
         repository: ${{ github.repository_owner }}/mlops
         ref: main
-        token: ${{ secrets.MLOPS_READ_PERSONAL_ACCESS_TOKEN }}
+        token: ${{ secrets.TEMPLATE_PERSONAL_ACCESS_TOKEN }}
     
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2

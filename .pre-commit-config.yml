@@ -1,0 +1,65 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    -   id: check-yaml
+        description: Ensure YAML syntax validity
+    -   id: end-of-file-fixer
+        description: Add a newline at the end of the file if one is missing
+    -   id: trailing-whitespace
+        description: Remove trailing whitespace
+    -   id: check-merge-conflict
+        description: Ensure there are no merge conflict strings in files
+    -   id: debug-statements
+        description: Check if `print()` and `pdb` statements exist
+
+-   repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+    -   id: black
+        args: ["--line-length=88"]
+        additional_dependencies: ['click==8.0.4']
+        description: Opinionated code formatter for Python
+
+-   repo: https://github.com/PyCQA/flake8
+    rev: 6.1.0
+    hooks:
+    -   id: flake8
+        args: ["--max-line-length=88"]
+        description: Enforces Python coding standards and linting
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1
+    hooks:
+    -   id: mypy
+        args: ["--ignore-missing-imports"]
+        description: Static type checking for Python
+
+-   repo: https://github.com/PyCQA/bandit
+    rev: 1.7.4
+    hooks:
+    -   id: bandit
+        args: ["-r", "."]
+        description: Perform security checks for Python code
+
+-   repo: https://gitlab.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+    -   id: isort
+        args: ["--profile=black"]
+        description: Ensure imports are sorted and comply with `black` formatting
+
+-   repo: https://github.com/pre-commit/validate-json
+    rev: v2.0.0
+    hooks:
+    -   id: validate-json
+        description: Validate JSON files for correct syntax
+
+-   repo: https://github.com/adrienverge/yamllint
+    rev: v1.26.3
+    hooks:
+    -   id: yamllint
+        description: Linting for YAML files
+        files: \.(yaml|yml)$

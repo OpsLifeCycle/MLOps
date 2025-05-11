@@ -77,7 +77,7 @@ jobs:
           cp ../../README.md ../../../files_to_keep
           cp ../../CONTRIBUTING.md ../../../files_to_keep
           cp ../../.gitignore ../../../files_to_keep
-          cp ../../.pre-commit-config.yaml ../../../files_to_keep
+          cp ../../.pre-commit-config.yml ../../../files_to_keep
           # cp -r ../../.devcontainer ../../../files_to_keep
           cd ../../..
 
@@ -125,7 +125,7 @@ jobs:
 
           # Check if the GitHub repository exists and create it if it doesn't
           echo "Checking if the GitHub Repository exists..."
-          echo "${{ secrets.PERSONAL_ACCESS_TOKEN }}" | gh auth login --with-token
+          echo "${{ secrets.ORGANISATION_PERSONAL_ACCESS_TOKEN }}" | gh auth login --with-token
           if gh repo view ${{ inputs.github_org_name }}/${{ inputs.repo_name }} > /dev/null 2>&1; then
             echo "Repository ${{ inputs.repo_name }} exists."
           else
@@ -137,5 +137,5 @@ jobs:
             gh secret set ARM_CLIENT_SECRET --body "${{ secrets.ARM_CLIENT_SECRET }}" --repo ${{ inputs.github_org_name }}/${{ inputs.repo_name }}
             gh secret set ARM_SUBSCRIPTION_ID --body "${{ secrets.ARM_SUBSCRIPTION_ID }}" --repo ${{ inputs.github_org_name }}/${{ inputs.repo_name }}
             gh secret set ARM_TENANT_ID --body "${{ secrets.ARM_TENANT_ID }}" --repo ${{ inputs.github_org_name }}/${{ inputs.repo_name }}
-            gh secret set MLOPS_READ_PERSONAL_ACCESS_TOKEN --body "${{ secrets.MLOPS_READ_PERSONAL_ACCESS_TOKEN }}" --repo ${{ inputs.github_org_name }}/${{ inputs.repo_name }}
+            gh secret set TEMPLATE_PERSONAL_ACCESS_TOKEN --body "${{ secrets.TEMPLATE_PERSONAL_ACCESS_TOKEN }}" --repo ${{ inputs.github_org_name }}/${{ inputs.repo_name }}
           fi

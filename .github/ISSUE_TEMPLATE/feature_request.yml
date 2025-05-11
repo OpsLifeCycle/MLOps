@@ -1,0 +1,31 @@
+# Copyright (c) Rahul Bourai. All rights reserved.
+# Licensed under the PolyForm Strict License 1.0.0
+
+# Feature Request Template
+name: 💡 Feature request
+description: Suggest a new idea or improvement for the application.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping to improve this project! Please provide a detailed description of your feature request.
+
+  - type: input
+    id: title
+    attributes:
+      label: "Brief summary of the feature or enhancement"
+      placeholder: "E.g., Add dark mode support"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Detailed description"
+      placeholder: "Explain your feature request or enhancement in detail, including why it’s valuable."
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: "What is the use case or motivation?"
+      placeholder: "Describe how this feature would help users or improve the project."

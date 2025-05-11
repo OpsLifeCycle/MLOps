@@ -2,3 +2,7 @@
 # Licensed under the PolyForm Strict License 1.0.0
 
 blank_issues_enabled: false
+contact_links:
+  - name: "General Questions or Feedback"
+    url: "https://github.com/OpsLifeCycle/mlops/discussions"
+    about: "Have a question or feedback? Start a discussion here."
